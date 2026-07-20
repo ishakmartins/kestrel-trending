@@ -11,7 +11,7 @@ Each run writes to `dataset/trends/run_<YYYYMMDD-HHMMSS>/`:
 | `trends24_id_raw_<run_id>.csv` | Flat denormalized table — one row per topic per hour-column |
 | `trends24_id_bumpchart_<run_id>.png` | Bump chart: rank (Y) over time (X), top N topics (light mode) |
 | `trends24_id_bumpchart_<run_id>_dark.png` | Same chart on a `#121212` dark background with brighter palette |
-| `trends24_id_bumpchart_<run_id>_interactive.html` | Self-contained Plotly interactive chart (hover-highlight, sidebar search, day-boundary markers) |
+| `trends24_id_bumpchart_<run_id>_interactive.html` | Self-contained Plotly interactive chart (hover-highlight, sidebar search, day-boundary markers, date-range indicator) |
 
 After each run, stable "latest" copies are refreshed at `dataset/trends/`:
 
@@ -60,6 +60,7 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 - **Topic stats panel**: hover or pin a trace to see appearances, best rank, and total tweets in a floating panel.
 - **Sidebar search**: debounced (150 ms) substring filter in the sidebar (`#ssi`) that shows/hides checkbox rows by topic display name — scoped to the current time range, does not affect chart opacity. URL query-param sync (`?range=7d`).
 - **Day-boundary markers**: thick dashed vertical lines at each timezone's calendar midnight crossing (UTC, GMT+8, GMT+7), with stacked annotations in the format `{DayName}, DD MM YYYY ({tz})`. Recomputed on every range change.
+- **Date-range indicator**: compact text in the toolbar (between the Download CSV button and the flex spacer) showing the start and end of the currently displayed range in the format `[DayName, DD Mon YYYY, UTC: HH:MM, GMT+8: HH:MM, GMT+7: HH:MM] to [...]`. Updates automatically on every range change via `updDrng(hi)` called inside `redraw()`.
 - **Download CSV**: reconstructs the combined dataset from the embedded JSON blob into a downloadable `.csv`.
 - **Font**: Alte Haas Grotesk via `fonts.cdnfonts.com` CDN; fallback stack `'Helvetica Neue', Arial, sans-serif`. No local font files bundled.
 - **Accessibility**: ARIA labels on all controls, Escape key clears active state, collapsible sidebar on mobile.
@@ -79,7 +80,7 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 | v8 | Bug fixes: inline Plotly.js injection via `plotly.offline.get_plotlyjs()`; `_ts()` timestamp parser fix so range dropdown actually filters |
 | v9 | IIFE scope fix: all controls wired with `addEventListener` inside closure; Select All / Deselect All sidebar buttons |
 | v10 | Four fixes: (1) sidebar row-filter search replaces toolbar chart-dimming search; (2) sidebar list scoped to current time range; (3) day-boundary markers with tri-timezone labels; (4) dynamic chart width computed client-side per redraw |
-| v11 | Three fixes: (1) sidebar topic list sorted alphabetically (case/numeric-insensitive); (2) dim-opacity toggle 0%/50%/100% with localStorage persist + bring-to-front via `Plotly.moveTraces`; (3) x-axis tick labels gain GMT+7 date as fourth line |
+| v11 | Date-range indicator in toolbar: compact `<span id="drng">` between Download CSV and the flex spacer, showing `[DayName, DD Mon YYYY, UTC: HH:MM, GMT+8: HH:MM, GMT+7: HH:MM] to [...]` for the currently visible range. Shared `fmtTs(epochSec,off)` helper and module-level `DAYS`/`MONS`/`tzList` constants replace inline date math in `buildDayBoundaries`. |
 
 ## Requirements
 

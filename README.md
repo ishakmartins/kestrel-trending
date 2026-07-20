@@ -11,7 +11,7 @@ Each run writes to `dataset/trends/run_<YYYYMMDD-HHMMSS>/`:
 | `trends24_id_raw_<run_id>.csv` | Flat denormalized table — one row per topic per hour-column |
 | `trends24_id_bumpchart_<run_id>.png` | Bump chart: rank (Y) over time (X), top N topics (light mode) |
 | `trends24_id_bumpchart_<run_id>_dark.png` | Same chart on a `#121212` dark background with brighter palette |
-| `trends24_id_bumpchart_<run_id>_interactive.html` | Self-contained Plotly interactive chart (hover-highlight, topic search) |
+| `trends24_id_bumpchart_<run_id>_interactive.html` | Self-contained Plotly interactive chart (hover-highlight, sidebar search, day-boundary markers) |
 
 After each run, stable "latest" copies are refreshed at `dataset/trends/`:
 
@@ -46,16 +46,17 @@ best_position, total_tweets, trending_for_raw, trending_for_hours
 The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency at runtime):
 
 - **Combined dataset**: the chart renders all collected runs merged together. Each run appends to `dataset/trends/combined/trends24_id_combined.csv`; on duplicate `(topic, hour)` pairs the later capture wins. The full history is embedded as a compact JSON blob in the HTML.
-- **Scrollable x-axis**: natural pixel width (`max(1400, n_hours × 80px)`) in an `overflow-x: auto` container. Y-axis rank labels are in a sticky panel outside the scroll area so they stay visible while scrolling.
+- **Dynamic chart width**: width is computed client-side at each redraw as `Math.max(containerW, hi.length × 80px)` — short ranges fill the viewport, long ranges grow beyond it and trigger `overflow-x: auto` scrolling. Y-axis rank labels are in a sticky panel outside the scroll area so they stay visible while scrolling.
 - **Boxed keyword labels**: first and last non-NaN appearance of each topic gets a bordered label box — same rule as the static PNG, via Plotly `layout.annotations`.
 - **Dual top + bottom x-axes**: hour labels appear on both the top and bottom edge of the chart (Plotly `xaxis2`, `overlaying='x'`, `side='top'`).
 - **Time-range dropdown**: Last 6h / 24h / 3d / 7d / All — filters the embedded dataset and re-renders client-side via `Plotly.react()`. No backend required.
 - **Per-topic checkboxes**: sidebar checkbox list for hard show/hide of individual topics (independent of opacity dimming).
-- **Unified state model**: single `S = {range, search, checked, pinned, hovered, dark}` object with one `applyVis()` function as the only `Plotly.restyle` caller, fixing the v6 race condition where hover-restore wiped the active search filter.
+- **Unified state model**: single `S = {range, checked, pinned, hovered, dark}` object with one `applyVis()` function as the only `Plotly.restyle` caller, fixing the v6 race condition where hover-restore wiped the active search filter.
 - **Click-to-pin**: click a trace to lock its emphasis; click again or press Escape to unpin.
 - **Light/dark toggle**: both palettes embedded; swap is instant client-side. Default dark. `localStorage` remembers the last choice.
 - **Topic stats panel**: hover or pin a trace to see appearances, best rank, and total tweets in a floating panel.
-- **Search**: debounced (150 ms) substring filter across topic name and display name. URL query-param sync (`?range=7d&filter=foo`).
+- **Sidebar search**: debounced (150 ms) substring filter in the sidebar (`#ssi`) that shows/hides checkbox rows by topic display name — scoped to the current time range, does not affect chart opacity. URL query-param sync (`?range=7d`).
+- **Day-boundary markers**: thick dashed vertical lines at each timezone's calendar midnight crossing (UTC, GMT+8, GMT+7), with stacked annotations in the format `{DayName}, DD MM YYYY ({tz})`. Recomputed on every range change.
 - **Download CSV**: reconstructs the combined dataset from the embedded JSON blob into a downloadable `.csv`.
 - **Font**: Alte Haas Grotesk via `fonts.cdnfonts.com` CDN; fallback stack `'Helvetica Neue', Arial, sans-serif`. No local font files bundled.
 - **Accessibility**: ARIA labels on all controls, Escape key clears active state, collapsible sidebar on mobile.
@@ -72,6 +73,9 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 | v5 | Fill all rank slots 1..`TOP_N`: filter on `min(rank) <= TOP_N` instead of topic cap |
 | v6 | Readable static output (2× font sizes, first+last-only labels); dark-mode PNG; Plotly interactive HTML with hover-highlight and topic search; `build_rank_pivot` shared helper; `refresh_latest_pointers` stable latest-copy outputs |
 | v7 | Interactive chart overhaul: combined-dataset JSON embedded from all runs; natural-width scroll container + sticky y-axis; boxed first+last labels matching static PNG; dual top+bottom x-axes; unified JS state model fixing search+hover conflict; time-range dropdown; per-topic checkboxes; click-to-pin; light/dark toggle with localStorage; Alte Haas Grotesk font; Download CSV; URL sync; `OUTPUT_ROOT` anchored to repo root via `.git` detection |
+| v8 | Bug fixes: inline Plotly.js injection via `plotly.offline.get_plotlyjs()`; `_ts()` timestamp parser fix so range dropdown actually filters |
+| v9 | IIFE scope fix: all controls wired with `addEventListener` inside closure; Select All / Deselect All sidebar buttons |
+| v10 | Four fixes: (1) sidebar row-filter search replaces toolbar chart-dimming search; (2) sidebar list scoped to current time range; (3) day-boundary markers with tri-timezone labels; (4) dynamic chart width computed client-side per redraw |
 
 ## Requirements
 

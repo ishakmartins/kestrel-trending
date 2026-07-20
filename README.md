@@ -43,12 +43,23 @@ best_position, total_tweets, trending_for_raw, trending_for_hours
 
 ## Interactive chart
 
-The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency):
+The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency at runtime):
 
-- **Hover-highlight**: hovering a topic line dims all other traces to 12% opacity; unhover restores all. Implemented via `plotly_hover` / `plotly_unhover` JavaScript events.
-- **Topic search box**: fixed top-right text input — type any substring to live-filter traces (matching topics stay full opacity, non-matching fade to 6%). Clear button resets.
-- **Gaps**: missing hours render as breaks in the line (not interpolated), same honesty-about-missing-data principle as the static charts.
-- **Offline-capable**: `plotly.js` is embedded in the HTML, so the file works locally and will keep working once published to GitHub Pages (deployment not yet configured — see roadmap).
+- **Combined dataset**: the chart renders all collected runs merged together. Each run appends to `dataset/trends/combined/trends24_id_combined.csv`; on duplicate `(topic, hour)` pairs the later capture wins. The full history is embedded as a compact JSON blob in the HTML.
+- **Scrollable x-axis**: natural pixel width (`max(1400, n_hours × 80px)`) in an `overflow-x: auto` container. Y-axis rank labels are in a sticky panel outside the scroll area so they stay visible while scrolling.
+- **Boxed keyword labels**: first and last non-NaN appearance of each topic gets a bordered label box — same rule as the static PNG, via Plotly `layout.annotations`.
+- **Dual top + bottom x-axes**: hour labels appear on both the top and bottom edge of the chart (Plotly `xaxis2`, `overlaying='x'`, `side='top'`).
+- **Time-range dropdown**: Last 6h / 24h / 3d / 7d / All — filters the embedded dataset and re-renders client-side via `Plotly.react()`. No backend required.
+- **Per-topic checkboxes**: sidebar checkbox list for hard show/hide of individual topics (independent of opacity dimming).
+- **Unified state model**: single `S = {range, search, checked, pinned, hovered, dark}` object with one `applyVis()` function as the only `Plotly.restyle` caller, fixing the v6 race condition where hover-restore wiped the active search filter.
+- **Click-to-pin**: click a trace to lock its emphasis; click again or press Escape to unpin.
+- **Light/dark toggle**: both palettes embedded; swap is instant client-side. Default dark. `localStorage` remembers the last choice.
+- **Topic stats panel**: hover or pin a trace to see appearances, best rank, and total tweets in a floating panel.
+- **Search**: debounced (150 ms) substring filter across topic name and display name. URL query-param sync (`?range=7d&filter=foo`).
+- **Download CSV**: reconstructs the combined dataset from the embedded JSON blob into a downloadable `.csv`.
+- **Font**: Alte Haas Grotesk via `fonts.cdnfonts.com` CDN; fallback stack `'Helvetica Neue', Arial, sans-serif`. No local font files bundled.
+- **Accessibility**: ARIA labels on all controls, Escape key clears active state, collapsible sidebar on mobile.
+- **Offline-capable**: `plotly.js` is embedded in the HTML so the file works locally and on GitHub Pages without any backend.
 
 ## Notebooks
 
@@ -60,6 +71,7 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 | v4 | Boxed keyword labels replace dot markers at every hour position |
 | v5 | Fill all rank slots 1..`TOP_N`: filter on `min(rank) <= TOP_N` instead of topic cap |
 | v6 | Readable static output (2× font sizes, first+last-only labels); dark-mode PNG; Plotly interactive HTML with hover-highlight and topic search; `build_rank_pivot` shared helper; `refresh_latest_pointers` stable latest-copy outputs |
+| v7 | Interactive chart overhaul: combined-dataset JSON embedded from all runs; natural-width scroll container + sticky y-axis; boxed first+last labels matching static PNG; dual top+bottom x-axes; unified JS state model fixing search+hover conflict; time-range dropdown; per-topic checkboxes; click-to-pin; light/dark toggle with localStorage; Alte Haas Grotesk font; Download CSV; URL sync; `OUTPUT_ROOT` anchored to repo root via `.git` detection |
 
 ## Requirements
 

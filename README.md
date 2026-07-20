@@ -48,10 +48,13 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 - **Combined dataset**: the chart renders all collected runs merged together. Each run appends to `dataset/trends/combined/trends24_id_combined.csv`; on duplicate `(topic, hour)` pairs the later capture wins. The full history is embedded as a compact JSON blob in the HTML.
 - **Dynamic chart width**: width is computed client-side at each redraw as `Math.max(containerW, hi.length × 80px)` — short ranges fill the viewport, long ranges grow beyond it and trigger `overflow-x: auto` scrolling. Y-axis rank labels are in a sticky panel outside the scroll area so they stay visible while scrolling.
 - **Boxed keyword labels**: first and last non-NaN appearance of each topic gets a bordered label box — same rule as the static PNG, via Plotly `layout.annotations`.
+- **Four-line tick labels**: each hour column's x-axis tick (top and bottom) shows UTC / GMT+8 / GMT+7 times plus a fourth line with the GMT+7 calendar date in `{DayName}, DD MM YYYY` format, computed Python-side at export time in `format_tz_label`.
 - **Dual top + bottom x-axes**: hour labels appear on both the top and bottom edge of the chart (Plotly `xaxis2`, `overlaying='x'`, `side='top'`).
 - **Time-range dropdown**: Last 6h / 24h / 3d / 7d / All — filters the embedded dataset and re-renders client-side via `Plotly.react()`. No backend required.
-- **Per-topic checkboxes**: sidebar checkbox list for hard show/hide of individual topics (independent of opacity dimming).
-- **Unified state model**: single `S = {range, checked, pinned, hovered, dark}` object with one `applyVis()` function as the only `Plotly.restyle` caller, fixing the v6 race condition where hover-restore wiped the active search filter.
+- **Per-topic checkboxes**: sidebar checkbox list for hard show/hide of individual topics (independent of opacity dimming). Checkbox rows are sorted **alphabetically** (case/numeric-insensitive) regardless of time range; rank order in the chart itself is unchanged.
+- **Dim-opacity toggle**: toolbar `Dim:` control (0% / 50% / 100%) sets the opacity of unselected traces when a topic is emphasised by hover or pin. Default 0% (closest to the old hardcoded near-zero). Setting persists across page reloads via `localStorage` key `kestrel_dim`. Takes effect immediately on the active pin/hover without a page reload.
+- **Bring-to-front**: when a trace is pinned or hovered, `Plotly.moveTraces` moves it to the last draw position (just before the hidden `xaxis2` dummy trace) so it visually renders above crossing traces at full opacity. Order resets on unpin / unhover / Escape / Reset view.
+- **Unified state model**: single `S = {range, checked, pinned, hovered, dark, dimOpacity}` object with one `applyVis()` function as the only `Plotly.restyle` caller, fixing the v6 race condition where hover-restore wiped the active search filter.
 - **Click-to-pin**: click a trace to lock its emphasis; click again or press Escape to unpin.
 - **Light/dark toggle**: both palettes embedded; swap is instant client-side. Default dark. `localStorage` remembers the last choice.
 - **Topic stats panel**: hover or pin a trace to see appearances, best rank, and total tweets in a floating panel.
@@ -76,6 +79,7 @@ The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency
 | v8 | Bug fixes: inline Plotly.js injection via `plotly.offline.get_plotlyjs()`; `_ts()` timestamp parser fix so range dropdown actually filters |
 | v9 | IIFE scope fix: all controls wired with `addEventListener` inside closure; Select All / Deselect All sidebar buttons |
 | v10 | Four fixes: (1) sidebar row-filter search replaces toolbar chart-dimming search; (2) sidebar list scoped to current time range; (3) day-boundary markers with tri-timezone labels; (4) dynamic chart width computed client-side per redraw |
+| v11 | Three fixes: (1) sidebar topic list sorted alphabetically (case/numeric-insensitive); (2) dim-opacity toggle 0%/50%/100% with localStorage persist + bring-to-front via `Plotly.moveTraces`; (3) x-axis tick labels gain GMT+7 date as fourth line |
 
 ## Requirements
 

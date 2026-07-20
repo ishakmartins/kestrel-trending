@@ -9,7 +9,17 @@ Each run writes to `dataset/trends/run_<YYYYMMDD-HHMMSS>/`:
 | File | Description |
 |------|-------------|
 | `trends24_id_raw_<run_id>.csv` | Flat denormalized table — one row per topic per hour-column |
-| `trends24_id_bumpchart_<run_id>.png` | Bump chart: rank (Y) over time (X), top N topics |
+| `trends24_id_bumpchart_<run_id>.png` | Bump chart: rank (Y) over time (X), top N topics (light mode) |
+| `trends24_id_bumpchart_<run_id>_dark.png` | Same chart on a `#121212` dark background with brighter palette |
+| `trends24_id_bumpchart_<run_id>_interactive.html` | Self-contained Plotly interactive chart (hover-highlight, topic search) |
+
+After each run, stable "latest" copies are refreshed at `dataset/trends/`:
+
+| File | Description |
+|------|-------------|
+| `latest_light.png` | Most recent light PNG |
+| `latest_dark.png` | Most recent dark PNG |
+| `latest_interactive.html` | Most recent interactive HTML |
 
 The CSV schema:
 
@@ -26,9 +36,19 @@ best_position, total_tweets, trending_for_raw, trending_for_hours
 - **Y-axis**: rank 1 at top, inverted, capped at `TOP_N`
 - **X-axis**: dual top + bottom labels; each column shows three time zones — `UTC / GMT+8 / GMT+7`
 - **Lines**: one per topic, colored from a stable 150-color warm-autumn (pumpkin) palette
-- **Nodes**: boxed keyword labels at every non-NaN hour position
-- **Color assignment**: `MD5(name_norm) mod 150` — same topic always gets the same color across runs
+- **Nodes**: boxed keyword label at each topic's **first** and **last** non-NaN hour only (decluttered from v5's every-hour labeling, making 10pt text readable without overlap)
+- **Color assignment**: `MD5(name_norm) mod 150` — same topic always gets the same color across runs and across light/dark/interactive outputs
 - **Overflow**: topics beyond palette size get dashed lines; chart annotates the count
+- **Dark mode PNG**: separate `_dark.png` uses a `#121212` background and a shifted palette (lightness 55–82% instead of 35–65%) so colors stay vivid instead of muddy
+
+## Interactive chart
+
+The `_interactive.html` is a fully self-contained Plotly file (no CDN dependency):
+
+- **Hover-highlight**: hovering a topic line dims all other traces to 12% opacity; unhover restores all. Implemented via `plotly_hover` / `plotly_unhover` JavaScript events.
+- **Topic search box**: fixed top-right text input — type any substring to live-filter traces (matching topics stay full opacity, non-matching fade to 6%). Clear button resets.
+- **Gaps**: missing hours render as breaks in the line (not interpolated), same honesty-about-missing-data principle as the static charts.
+- **Offline-capable**: `plotly.js` is embedded in the HTML, so the file works locally and will keep working once published to GitHub Pages (deployment not yet configured — see roadmap).
 
 ## Notebooks
 
@@ -39,6 +59,7 @@ best_position, total_tweets, trending_for_raw, trending_for_hours
 | v3 | Vertical per-hour gridlines; dual UTC/GMT+8/GMT+7 x-axis; `TOP_N` configurable |
 | v4 | Boxed keyword labels replace dot markers at every hour position |
 | v5 | Fill all rank slots 1..`TOP_N`: filter on `min(rank) <= TOP_N` instead of topic cap |
+| v6 | Readable static output (2× font sizes, first+last-only labels); dark-mode PNG; Plotly interactive HTML with hover-highlight and topic search; `build_rank_pivot` shared helper; `refresh_latest_pointers` stable latest-copy outputs |
 
 ## Requirements
 
@@ -47,6 +68,7 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 pandas>=2.0.0
 matplotlib>=3.7.0
+plotly>=5.18.0
 ```
 
 Install:

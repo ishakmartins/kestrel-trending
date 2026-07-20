@@ -2,6 +2,7 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 pandas>=2.0.0
 matplotlib>=3.7.0
+plotly>=5.18.0
 # playwright is NOT required for v1 — add only if trends24.in/indonesia/ table tab
 # is confirmed JS-injected (i.e. parse_detail_stats_table returns None despite the
 # table being visible in a browser).  If needed: pip install playwright && playwright install chromium

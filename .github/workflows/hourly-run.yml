@@ -1,0 +1,67 @@
+name: Refresh Kestrel trend chart
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install nbconvert jupyter
+
+      - name: Resolve latest notebook
+        id: resolve
+        run: |
+          NOTEBOOK=$(ls notebooks/kestrel-trends_bumpchart-*.ipynb | sort | tail -n1)
+          echo "notebook=$NOTEBOOK" >> "$GITHUB_OUTPUT"
+          echo "Resolved notebook: $NOTEBOOK"
+
+      - name: Execute notebook
+        run: |
+          jupyter nbconvert --to notebook --execute --inplace "${{ steps.resolve.outputs.notebook }}"
+
+      - name: Publish to docs/
+        run: |
+          mkdir -p docs
+          cp dataset/trends/latest_light.png docs/latest_light.png
+          cp dataset/trends/latest_dark.png docs/latest_dark.png
+          cp dataset/trends/latest_interactive.html docs/latest_interactive.html
+          touch docs/.nojekyll
+
+      - name: Verify interactive page produced
+        run: |
+          if [ ! -s docs/latest_interactive.html ]; then
+            echo "docs/latest_interactive.html missing or empty — refusing to push broken page"
+            exit 1
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/latest_light.png docs/latest_dark.png docs/latest_interactive.html docs/.nojekyll
+          git add "${{ steps.resolve.outputs.notebook }}"
+          git add dataset/trends/run_* 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore: refresh trend chart [skip ci]"
+            git push
+          fi

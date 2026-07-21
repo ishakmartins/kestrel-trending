@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kestrel Trending — Hourly Automation + open.lokanetra.dev Setup</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 780px; margin: 40px auto; padding: 0 20px; line-height: 1.55; color: #1a1a1a; background: #fff; }
+  h1 { font-size: 1.5em; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+  h2 { font-size: 1.15em; margin-top: 2em; color: #2c3e50; }
+  h3 { font-size: 1em; margin-top: 1.4em; color: #444; }
+  code, pre { background: #f5f5f5; border-radius: 4px; }
+  code { padding: 1px 5px; font-size: 0.92em; }
+  pre { padding: 12px 14px; overflow-x: auto; font-size: 0.85em; }
+  .box { background: #f8f9fb; border: 1px solid #e3e6ea; border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+  .ai { border-left: 4px solid #6c5ce7; }
+  .you { border-left: 4px solid #e17055; }
+  .note { border-left: 4px solid #f1c40f; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: #f5f5f5; }
+  .tag { font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .ai .tag { color: #6c5ce7; }
+  .you .tag { color: #e17055; }
+  .note .tag { color: #b7950b; }
+  a { color: #2563eb; }
+  .url { font-family: monospace; background: #eef2ff; padding: 1px 6px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Serving Kestrel Trending at open.lokanetra.dev/kestrel-trending</h1>
+
+<p>Updated plan: instead of the default <code>ishakmartins.github.io/kestrel-trending</code> URL, this sets up a dedicated hub subdomain — <span class="url">open.lokanetra.dev</span> — that houses Kestrel Trending now and can absorb more open-source projects and open datasets later, each getting its own clean subpath.</p>
+
+<h2>1. Why this is possible in one step, not per-project</h2>
+<p>GitHub Pages has a rule made for exactly this: if you set a custom domain on your <strong>user site</strong> (the special repo named <code>ishakmartins.github.io</code>), every other public repo's Pages site under your account automatically inherits that same domain as a subpath — no per-project DNS or config needed. A project repo named <code>kestrel-trending</code> with Pages enabled and no custom domain of its own will simply appear at <span class="url">open.lokanetra.dev/kestrel-trending</span> once the user site owns the domain.</p>
+<p>Practically, this means:</p>
+<ul>
+<li><strong>One-time setup</strong>: point <code>open.lokanetra.dev</code> at your GitHub user site.</li>
+<li><strong>Zero setup per future project</strong>: any new public repo just needs Pages turned on and it shows up at <code>open.lokanetra.dev/&lt;repo-name&gt;</code> automatically.</li>
+</ul>
+<p>This is still fully free — custom domains, HTTPS certificates (via Let's Encrypt), and Pages hosting all come at no cost on public repos.</p>
+
+<h2>2. Target architecture</h2>
+<table>
+<tr><th>Piece</th><th>Role</th></tr>
+<tr><td><code>ishakmartins.github.io</code> repo</td><td>The "hub" — owns the custom domain <code>open.lokanetra.dev</code>; its homepage becomes a landing/index page listing all open projects</td></tr>
+<tr><td><code>kestrel-trending</code> repo</td><td>Project repo; Pages enabled, no custom domain of its own → inherits the hub's domain at <code>/kestrel-trending</code></td></tr>
+<tr><td>GitHub Actions (in kestrel-trending)</td><td>Runs the notebook hourly, regenerates CSV/PNG/interactive HTML, commits into <code>docs/</code></td></tr>
+<tr><td>Future open-source repos</td><td>Same pattern: Pages on, no custom domain set → auto-appears at <code>open.lokanetra.dev/&lt;name&gt;</code></td></tr>
+</table>
+
+<h2>3. Step-by-step</h2>
+
+<h3>A. Domain and DNS (one-time, account level)</h3>
+<div class="box you"><span class="tag">You do this</span><br>
+1. If you haven't already, create the special repo <code>ishakmartins.github.io</code> (public). This becomes your open-projects hub/landing page.<br>
+2. In GitHub account settings, verify ownership of <code>lokanetra.dev</code> <em>before</em> adding the custom domain to Pages — this is a security step (a TXT record) that prevents subdomain takeover. Docs: <a href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages">Verifying your custom domain</a>.<br>
+3. In the <code>ishakmartins.github.io</code> repo → <em>Settings → Pages → Custom domain</em>, enter <code>open.lokanetra.dev</code> and save. GitHub will add a <code>CNAME</code> file to the repo automatically.<br>
+4. At your DNS provider for <code>lokanetra.dev</code>, add a <strong>CNAME record</strong>: host <code>open</code> → value <code>ishakmartins.github.io</code>. (Not the repo name — just the bare user-site domain.)<br>
+5. Back in Pages settings, wait for the DNS check to pass, then tick <strong>Enforce HTTPS</strong> (can take up to ~24h for the certificate, usually much faster).
+</div>
+
+<div class="box ai"><span class="tag">Claude can do this</span><br>
+Draft the landing page for <code>ishakmartins.github.io</code> (a simple, clean index listing open projects, starting with Kestrel Trending, with room to add more entries later) once the repo exists and you give the go-ahead.
+</div>
+
+<h3>B. Kestrel Trending repo — Pages + automation</h3>
+<div class="box you"><span class="tag">You do this</span><br>
+1. In <code>kestrel-trending</code> → <em>Settings → Pages</em>, set source to <em>Deploy from a branch → main → /docs</em>. Do <strong>not</strong> set a custom domain here — leaving it blank is what lets it inherit <code>open.lokanetra.dev</code> from the hub.<br>
+2. <em>Settings → Actions → General → Workflow permissions</em> → select <strong>Read and write permissions</strong> (needed so the hourly workflow can commit new chart output).
+</div>
+
+<div class="box ai"><span class="tag">Claude can do this</span><br>
+Write and commit the GitHub Actions workflow (<code>.github/workflows/hourly-run.yml</code>) that installs <code>requirements.txt</code>, executes the notebook headlessly (<code>nbconvert --execute</code> or <code>papermill</code>) on a cron schedule (e.g. <code>0 * * * *</code>), copies the fresh <code>latest_light.png</code> / <code>latest_dark.png</code> / <code>latest_interactive.html</code> into <code>docs/</code>, and commits + pushes using the built-in token. Also write <code>docs/index.html</code>, a thin wrapper embedding the interactive chart. I can add both to the repo now on your go-ahead.
+</div>
+
+<div class="box you"><span class="tag">You do this</span><br>
+Trigger the workflow manually once from the <strong>Actions</strong> tab (don't wait for the first hourly tick), confirm it goes green, then check <span class="url">open.lokanetra.dev/kestrel-trending</span> loads the current chart.
+</div>
+
+<h2>4. Future considerations — growing open.lokanetra.dev</h2>
+<div class="box note"><span class="tag">Design notes for later</span><br>
+<ul>
+<li><strong>Adding a new open project:</strong> create the repo, enable Pages from a branch/folder, leave its custom domain blank. It appears at <code>open.lokanetra.dev/&lt;repo-name&gt;</code> with no DNS work.</li>
+<li><strong>Hub landing page:</strong> keep <code>ishakmartins.github.io</code>'s <code>index.html</code> as a manually (or Claude-)maintained directory of what's live under the subdomain — a natural place for short descriptions, last-updated timestamps, and links to each project's own README/data license.</li>
+<li><strong>Open data, not just dashboards:</strong> the same pattern works for raw datasets — a repo can publish a <code>docs/</code> folder of CSVs/JSON with a small index page, reachable at <code>open.lokanetra.dev/&lt;dataset-repo&gt;</code>, no separate hosting needed.</li>
+<li><strong>Consistent look:</strong> if you want shared styling/branding across projects (so the hub feels like one coherent site rather than a list of disconnected demos), a small shared CSS/header snippet copied into each project's <code>docs/</code> is enough — no build system required.</li>
+<li><strong>Repo growth:</strong> hourly commits from Kestrel Trending's workflow will keep growing that repo's git history. Not a functional problem, but worth revisiting (e.g. periodic squashing, or moving generated output to a separate branch) if the repo becomes unwieldy — this can be handled per-repo without affecting the hub domain.</li>
+<li><strong>Repo-level override:</strong> if any future project ever needs its <em>own</em> separate domain instead of a subpath, that's still possible — setting a custom domain directly on that repo overrides inheriting the hub's domain.</li>
+</ul>
+</div>
+
+<h2>5. Division of labor, at a glance</h2>
+<table>
+<tr><th>Task</th><th>Who</th></tr>
+<tr><td>Create/verify <code>ishakmartins.github.io</code>, verify domain ownership, add DNS CNAME, enable Pages + custom domain + HTTPS</td><td>You (account/DNS-level, can't be done by Claude)</td></tr>
+<tr><td>Draft hub landing page content</td><td>Claude (once repo exists)</td></tr>
+<tr><td>Enable Pages on <code>kestrel-trending</code>, set Actions write permissions</td><td>You (GitHub UI)</td></tr>
+<tr><td>Write the hourly workflow YAML + <code>docs/index.html</code>, test notebook execution</td><td>Claude</td></tr>
+<tr><td>Trigger + verify first run</td><td>You (GitHub Actions tab)</td></tr>
+<tr><td>Add future open projects</td><td>Shared — Claude scaffolds each repo's Pages folder, you flip the Pages toggle</td></tr>
+</table>
+
+</body>
+</html>

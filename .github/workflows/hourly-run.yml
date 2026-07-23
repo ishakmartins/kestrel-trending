@@ -59,6 +59,7 @@ jobs:
           git add docs/latest_light.png docs/latest_dark.png docs/latest_interactive.html docs/.nojekyll
           git add "${{ steps.resolve.outputs.notebook }}"
           git add dataset/trends/run_* 2>/dev/null || true
+          git add dataset/trends/combined/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else

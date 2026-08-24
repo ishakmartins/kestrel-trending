@@ -2,82 +2,77 @@ name: Kestrel-Trending
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # scrape: matches trends24.in's own refresh cadence
-    - cron: "0 * * * *"    # report rebuild + Astro site build
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: "scrape | report"
-        default: report
+    - cron: "*/30 * * * *" # scrape + rebuild dashboard + rebuild Pages site, every 30 min
+  workflow_dispatch: {}
 
 permissions:
   contents: write
 
-jobs:
-  scrape:
-    # Cheap, frequent, append-only: fetch trends24.in/indonesia/ once, append to the one
-    # central CSV. No charts here — see the report job. Diff per run is a handful of CSV
-    # rows, not the multi-MB PNG/HTML commits the old per-run notebook pipeline produced.
-    if: github.event.schedule == '*/30 * * * *' || github.event.inputs.mode == 'scrape'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install -r requirements.txt
-      - run: python -m trending.scraper
-      - run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dataset/trends/trends24_id.csv
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-          else
-            git commit -m "chore: scrape trends24.in/indonesia [skip ci]"
-            git push
-          fi
+concurrency:
+  group: kestrel-trending-run
+  cancel-in-progress: false
 
-  report:
-    # Rebuilds the interactive dashboard hourly (not every 30 min like the scraper) — the
-    # embedded JSON blob is a few hundred KB and changes substantially on every rebuild even
-    # though it's bounded to a 90-day lookback (trending/report.py's LOOKBACK_DAYS), so
-    # committing it every 30 min would reintroduce the same unbounded git-history growth this
-    # migration was meant to fix. Hourly is a reasonable freshness/diff-size tradeoff; adjust
-    # LOOKBACK_DAYS/cadence in trending/report.py if that balance needs to shift.
-    if: github.event.schedule == '0 * * * *' || github.event.inputs.mode == 'report'
+jobs:
+  run:
+    # Single job, not split scrape/report jobs on the same cadence: two jobs both
+    # triggered every 30 min would race to `git push` against the same branch. One
+    # job, sequential steps, one commit at the end avoids that.
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: site/package-lock.json
-      - run: pip install -r requirements.txt
-      - run: python -m trending.report
-      - run: npm ci
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Scrape trends24.in/indonesia/
+        run: python -m trending.scraper
+
+      - name: Rebuild interactive dashboard
+        run: python -m trending.report
+
+      - name: Install site dependencies
+        run: npm ci
         working-directory: site
-      - run: npm run build
+
+      - name: Build Astro site
+        run: npm run build
         working-directory: site
-      - run: |
+
+      - name: Verify dashboard + site output
+        run: |
+          if [ ! -s dataset/trends/latest_interactive.html ]; then
+            echo "dataset/trends/latest_interactive.html missing or empty — refusing to push"
+            exit 1
+          fi
+          if [ ! -s docs/index.html ]; then
+            echo "docs/index.html missing or empty — refusing to push broken site"
+            exit 1
+          fi
           if [ ! -s docs/trending/index.html ]; then
             echo "docs/trending/index.html missing or empty — refusing to push broken page"
             exit 1
           fi
-      - run: |
+
+      - name: Commit and push
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dataset/trends/latest_interactive.html docs/
+          git add dataset/trends/trends24_id.csv dataset/trends/latest_interactive.html docs/
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "chore: rebuild trending dashboard [skip ci]"
+            git commit -m "chore: refresh trending data + dashboard [skip ci]"
             git push
           fi
       # Repo Settings -> Pages -> "Deploy from a branch": main / docs. This is the existing

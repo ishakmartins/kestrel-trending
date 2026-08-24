@@ -4,18 +4,18 @@ Scrapes Indonesia's Twitter/X trending topics from [trends24.in/indonesia/](http
 
 ## Architecture
 
-Two independent modules, split so a cheap, frequent scrape can't turn into a slow, bloated one:
+Two independent modules, run back-to-back every 30 minutes by
+`.github/workflows/hourly-run.yml`'s single `run` job (one job, not two, so a scrape-job
+push and a report-job push can't race each other):
 
-- **`trending/scraper.py`** — fetches trends24.in/indonesia/ every 30 minutes (see
-  `.github/workflows/hourly-run.yml`, `scrape` job) and appends new rows to one central CSV,
-  `dataset/trends/trends24_id.csv`, deduping on `(name_norm, hour_label)` — latest capture
-  wins. No charts, no per-run files — just fetch and append.
+- **`trending/scraper.py`** — fetches trends24.in/indonesia/ and appends new rows to one
+  central CSV, `dataset/trends/trends24_id.csv`, deduping on `(name_norm, hour_label)` —
+  latest capture wins. No charts, no per-run files — just fetch and append.
 - **`trending/report.py`** — reads that CSV and rebuilds one self-contained interactive
   Plotly HTML dashboard (`dataset/trends/latest_interactive.html`, also published to
-  `docs/trending/index.html` for GitHub Pages), on an hourly cadence (`report` job). Embeds
-  only the last 90 days of data in the page (`LOOKBACK_DAYS` in `trending/report.py`) so the
-  HTML payload doesn't grow unbounded as the CSV does over time; the CSV itself keeps full
-  history.
+  `docs/trending/index.html` for GitHub Pages). Embeds only the last 90 days of data in the
+  page (`LOOKBACK_DAYS` in `trending/report.py`) so the HTML payload doesn't grow unbounded
+  as the CSV does over time; the CSV itself keeps full history.
 - **`site/`** — Astro homepage that fronts GitHub Pages (`docs/index.html`), linking to the
   dashboard at `/trending/`. `npm run build` (run from `site/`) first stages the generated
   dashboard HTML + `src/logo/lokentra.dev-logo.svg` into `site/public/` via

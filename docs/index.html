@@ -1,15 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kestrel Trending — Indonesia Twitter Trends</title>
-<style>
-  body { margin: 0; font-family: system-ui, sans-serif; background: #111; color: #eee; }
-  iframe { width: 100%; height: 100vh; border: 0; display: block; }
-</style>
-</head>
-<body>
-<iframe src="latest_interactive.html" title="Kestrel trend chart"></iframe>
-</body>
-</html>
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kestrel-Trending</title><style>@font-face{font-family:Alte Haas Grotesk;src:url(/kestrel-trending/fonts/AlteHaasGroteskRegular.ttf) format("truetype");font-weight:400;font-display:swap}@font-face{font-family:Alte Haas Grotesk;src:url(/kestrel-trending/fonts/AlteHaasGroteskBold.ttf) format("truetype");font-weight:700;font-display:swap}:root{--bg:#121212;--bg2:#1c1c1c;--fg:#e0e0e0;--fg2:#aaa;--bd:#333;--acc:#ff8c42;--ibg:#2a2a2a;--ibd:#444;--btn:#2a2a2a;--btnh:#3a3a3a}body.light{--bg:#fff;--bg2:#f5f5f5;--fg:#111;--fg2:#555;--bd:#ccc;--acc:#d4520a;--ibg:#fff;--ibd:#aaa;--btn:#eee;--btnh:#ddd}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:Alte Haas Grotesk,Helvetica Neue,Arial,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh}main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:0 2rem}a{color:var(--fg);text-decoration:none;border-bottom:1px solid var(--bd)}a:hover{color:var(--acc);border-bottom-color:var(--acc)}hr{border:0;border-top:1px solid var(--bd);margin:0}.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:1180px;margin:0 auto;padding:1.1rem 2rem}.top .brand{display:flex;align-items:center;gap:.6rem;border:0}.top .brand img{height:22px;width:auto;display:block}.top .brand span{font-weight:700;font-size:.95rem;color:var(--fg)}.top a.navlink{border:0;font-size:.85rem;color:var(--fg2)}#theme{background:var(--btn);color:var(--fg);border:1px solid var(--ibd);border-radius:2px;padding:.3rem .7rem;font:inherit;font-size:.78rem;cursor:pointer}#theme:hover{background:var(--btnh);color:var(--acc)}h1{font-size:clamp(2.6rem,7vw,4.6rem);font-weight:700;letter-spacing:-.02em;line-height:1.02;margin:4.5rem 0 1.6rem}.intro{font-size:1.1rem;color:var(--fg2);max-width:62ch;margin:0 0 2rem}footer{border-top:1px solid var(--bd);margin-top:6rem;font-size:.78rem;color:var(--fg2)}.foot{max-width:1180px;margin:0 auto;padding:1rem 2rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem 1.4rem}.foot nav{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem}.foot a{color:var(--fg2);border:0}.foot a:hover{color:var(--acc)}@media(max-width:760px){main,.top,.foot{padding-left:1.1rem;padding-right:1.1rem}}.callout[data-astro-cid-j7pv25f6]{border:1px solid var(--bd);border-left:3px solid var(--acc);border-radius:2px;padding:.9rem 1.2rem;margin:0 0 2rem;max-width:62ch;color:var(--fg2)}.callout[data-astro-cid-j7pv25f6] a[data-astro-cid-j7pv25f6]{color:var(--fg)}.callout[data-astro-cid-j7pv25f6] a[data-astro-cid-j7pv25f6]:hover{color:var(--acc)}.cta[data-astro-cid-j7pv25f6]{display:inline-block;border:1px solid var(--acc);border-radius:2px;color:var(--acc);padding:.7rem 1.4rem;font-weight:700;margin:0 0 3rem}.cta[data-astro-cid-j7pv25f6]:hover{background:var(--acc);color:var(--bg)}.about[data-astro-cid-j7pv25f6]{max-width:62ch;color:var(--fg2);margin:0 0 4rem}.about[data-astro-cid-j7pv25f6] summary[data-astro-cid-j7pv25f6]{cursor:pointer;color:var(--fg)}.about[data-astro-cid-j7pv25f6] p[data-astro-cid-j7pv25f6]{margin:.8rem 0 0;line-height:1.65}.about[data-astro-cid-j7pv25f6] code[data-astro-cid-j7pv25f6]{background:var(--ibg);border:1px solid var(--bd);border-radius:2px;padding:1px 5px;font-size:.9em}
+</style></head> <body> <script>
+  if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+</script> <div class="top"> <a class="brand" href="/kestrel-trending/"> <img src="/kestrel-trending/logo.svg" alt="Lokanetra"> <span>Kestrel-Trending</span> </a> <a class="navlink" href="https://lokanetra.dev/">lokanetra.dev</a> <button id="theme" type="button" aria-label="Toggle dark or light theme">Light / Dark</button> </div> <hr> <main> <h1 data-astro-cid-j7pv25f6>Kestrel-Trending</h1> <p class="intro" data-astro-cid-j7pv25f6>
+Kestrel-Trending scrapes Indonesia's Twitter/X trending topics from
+<a href="https://trends24.in/indonesia/" target="_blank" rel="noopener" data-astro-cid-j7pv25f6>trends24.in/indonesia/</a>
+every 30 minutes and renders a rank-over-time bump chart: which topics trended, when, how
+    high they ranked, and how long they stuck around.
+</p> <p class="callout" data-astro-cid-j7pv25f6>
+Best paired with <a href="https://open.lokanetra.dev/kolibri/" data-astro-cid-j7pv25f6>Kolibri</a>, which detects
+    inauthentic amplification behind a trending keyword.
+</p> <a class="cta" href="/kestrel-trending/trending/" data-astro-cid-j7pv25f6>Open the dashboard →</a> <details class="about" data-astro-cid-j7pv25f6> <summary data-astro-cid-j7pv25f6>About this dashboard</summary> <p data-astro-cid-j7pv25f6>
+A scraper (<code data-astro-cid-j7pv25f6>trending/scraper.py</code>) fetches trends24.in/indonesia/ every 30
+      minutes and appends new rows to one central CSV, deduping on (topic, hour). A report
+      builder (<code data-astro-cid-j7pv25f6>trending/report.py</code>) rebuilds this dashboard hourly from that CSV:
+      search topics, toggle individual topics, pick a quick or custom date range, and read
+      each topic's first/best/last rank in the stats table below the chart. Fully
+      self-contained — the chart works offline, no backend calls at view time. Full history
+      is kept in the CSV regardless of what a given dashboard build embeds.
+</p> </details>  </main> <footer> <div class="foot"> <nav> <a href="https://lokanetra.dev/">Homepage</a> <a href="https://docs.lokanetra.dev/kestrel/disclaimer">Disclaimer</a> <a href="https://lokanetra.dev/cookies">Cookies</a> <a href="https://lokanetra.dev/privacy">Privacy</a> <a href="https://lokanetra.dev/terms">Terms</a> </nav> <span>© 2026 Lokanetra. All rights reserved.</span> </div> </footer> <script>
+  document.getElementById('theme').onclick = () => {
+    const light = document.body.classList.toggle('light');
+    localStorage.setItem('theme', light ? 'light' : 'dark');
+  };
+</script> </body> </html>

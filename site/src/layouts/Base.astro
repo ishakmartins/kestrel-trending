@@ -1,0 +1,93 @@
+---
+const { title } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{title}</title>
+<style is:global>
+/* Fonts: local ttf under public/fonts/ (see site/public/fonts/). Missing files fall
+   back to Helvetica Neue / Arial, nothing breaks. */
+@font-face{font-family:'Alte Haas Grotesk';src:url('/kestrel-trending/fonts/AlteHaasGroteskRegular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Alte Haas Grotesk';src:url('/kestrel-trending/fonts/AlteHaasGroteskBold.ttf') format('truetype');font-weight:700;font-display:swap}
+
+:root{--bg:#121212;--bg2:#1c1c1c;--fg:#e0e0e0;--fg2:#aaa;--bd:#333;--acc:#ff8c42;--ibg:#2a2a2a;--ibd:#444;--btn:#2a2a2a;--btnh:#3a3a3a}
+body.light{--bg:#fff;--bg2:#f5f5f5;--fg:#111;--fg2:#555;--bd:#ccc;--acc:#d4520a;--ibg:#fff;--ibd:#aaa;--btn:#eee;--btnh:#ddd}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:'Alte Haas Grotesk','Helvetica Neue',Arial,sans-serif;
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;min-height:100vh}
+main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:0 2rem}
+a{color:var(--fg);text-decoration:none;border-bottom:1px solid var(--bd)}
+a:hover{color:var(--acc);border-bottom-color:var(--acc)}
+hr{border:0;border-top:1px solid var(--bd);margin:0}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  max-width:1180px;margin:0 auto;padding:1.1rem 2rem}
+.top .brand{display:flex;align-items:center;gap:.6rem;border:0}
+.top .brand img{height:22px;width:auto;display:block}
+.top .brand span{font-weight:700;font-size:.95rem;color:var(--fg)}
+.top a.navlink{border:0;font-size:.85rem;color:var(--fg2)}
+#theme{background:var(--btn);color:var(--fg);border:1px solid var(--ibd);
+  border-radius:2px;padding:.3rem .7rem;font:inherit;font-size:.78rem;cursor:pointer}
+#theme:hover{background:var(--btnh);color:var(--acc)}
+
+h1{font-size:clamp(2.6rem,7vw,4.6rem);font-weight:700;letter-spacing:-.02em;
+  line-height:1.02;margin:4.5rem 0 1.6rem}
+.intro{font-size:1.1rem;color:var(--fg2);max-width:62ch;margin:0 0 2rem}
+
+footer{border-top:1px solid var(--bd);margin-top:6rem;font-size:.78rem;color:var(--fg2)}
+.foot{max-width:1180px;margin:0 auto;padding:1rem 2rem;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem 1.4rem}
+.foot nav{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem}
+.foot a{color:var(--fg2);border:0}
+.foot a:hover{color:var(--acc)}
+
+@media(max-width:760px){
+  main,.top,.foot{padding-left:1.1rem;padding-right:1.1rem}
+}
+</style>
+</head>
+<body>
+<script is:inline>
+  if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+</script>
+
+<div class="top">
+  <a class="brand" href={`${base}/`}>
+    <img src={`${base}/logo.svg`} alt="Lokanetra">
+    <span>Kestrel-Trending</span>
+  </a>
+  <a class="navlink" href="https://lokanetra.dev/">lokanetra.dev</a>
+  <button id="theme" type="button" aria-label="Toggle dark or light theme">Light / Dark</button>
+</div>
+<hr>
+
+<main><slot /></main>
+
+<footer>
+  <div class="foot">
+    <nav>
+      <a href="https://lokanetra.dev/">Homepage</a>
+      <a href="https://docs.lokanetra.dev/kestrel/disclaimer">Disclaimer</a>
+      <a href="https://lokanetra.dev/cookies">Cookies</a>
+      <a href="https://lokanetra.dev/privacy">Privacy</a>
+      <a href="https://lokanetra.dev/terms">Terms</a>
+    </nav>
+    <span>© 2026 Lokanetra. All rights reserved.</span>
+  </div>
+</footer>
+
+<script is:inline>
+  document.getElementById('theme').onclick = () => {
+    const light = document.body.classList.toggle('light');
+    localStorage.setItem('theme', light ? 'light' : 'dark');
+  };
+</script>
+</body>
+</html>

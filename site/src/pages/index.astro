@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="Kestrel-Trending">
+  <h1>Kestrel-Trending</h1>
+
+  <p class="intro">
+    Kestrel-Trending scrapes Indonesia's Twitter/X trending topics from
+    <a href="https://trends24.in/indonesia/" target="_blank" rel="noopener">trends24.in/indonesia/</a>
+    every 30 minutes and renders a rank-over-time bump chart: which topics trended, when, how
+    high they ranked, and how long they stuck around.
+  </p>
+
+  <p class="callout">
+    Best paired with <a href="https://open.lokanetra.dev/kolibri/">Kolibri</a>, which detects
+    inauthentic amplification behind a trending keyword.
+  </p>
+
+  <a class="cta" href={`${base}/trending/`}>Open the dashboard →</a>
+
+  <details class="about">
+    <summary>About this dashboard</summary>
+    <p>
+      A scraper (<code>trending/scraper.py</code>) fetches trends24.in/indonesia/ every 30
+      minutes and appends new rows to one central CSV, deduping on (topic, hour). A report
+      builder (<code>trending/report.py</code>) rebuilds this dashboard hourly from that CSV:
+      search topics, toggle individual topics, pick a quick or custom date range, and read
+      each topic's first/best/last rank in the stats table below the chart. Fully
+      self-contained — the chart works offline, no backend calls at view time. Full history
+      is kept in the CSV regardless of what a given dashboard build embeds.
+    </p>
+  </details>
+
+  <style>
+    .callout{border:1px solid var(--bd);border-left:3px solid var(--acc);border-radius:2px;
+      padding:.9rem 1.2rem;margin:0 0 2rem;max-width:62ch;color:var(--fg2)}
+    .callout a{color:var(--fg)}
+    .callout a:hover{color:var(--acc)}
+    .cta{display:inline-block;border:1px solid var(--acc);border-radius:2px;color:var(--acc);
+      padding:.7rem 1.4rem;font-weight:700;margin:0 0 3rem}
+    .cta:hover{background:var(--acc);color:var(--bg)}
+    .about{max-width:62ch;color:var(--fg2);margin:0 0 4rem}
+    .about summary{cursor:pointer;color:var(--fg)}
+    .about p{margin:.8rem 0 0;line-height:1.65}
+    .about code{background:var(--ibg);border:1px solid var(--bd);border-radius:2px;padding:1px 5px;font-size:.9em}
+  </style>
+</Base>

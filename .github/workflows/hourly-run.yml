@@ -1,54 +1,66 @@
-name: Refresh Kestrel trend chart
+name: Kestrel-Trending
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/30 * * * *" # scrape + rebuild dashboard + rebuild Pages site, every 30 min
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+concurrency:
+  group: kestrel-trending-run
+  cancel-in-progress: false
+
 jobs:
-  refresh:
+  run:
+    # Single job, not split scrape/report jobs on the same cadence: two jobs both
+    # triggered every 30 min would race to `git push` against the same branch. One
+    # job, sequential steps, one commit at the end avoids that.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install nbconvert jupyter
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: site/package-lock.json
 
-      - name: Resolve latest notebook
-        id: resolve
-        run: |
-          NOTEBOOK=$(ls notebooks/kestrel-trends_bumpchart-*.ipynb | sort | tail -n1)
-          echo "notebook=$NOTEBOOK" >> "$GITHUB_OUTPUT"
-          echo "Resolved notebook: $NOTEBOOK"
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
-      - name: Execute notebook
-        run: |
-          jupyter nbconvert --to notebook --execute --inplace "${{ steps.resolve.outputs.notebook }}"
+      - name: Scrape trends24.in/indonesia/
+        run: python -m trending.scraper
 
-      - name: Publish to docs/
-        run: |
-          mkdir -p docs
-          cp dataset/trends/latest_light.png docs/latest_light.png
-          cp dataset/trends/latest_dark.png docs/latest_dark.png
-          cp dataset/trends/latest_interactive.html docs/latest_interactive.html
-          touch docs/.nojekyll
+      - name: Rebuild interactive dashboard
+        run: python -m trending.report
 
-      - name: Verify interactive page produced
+      - name: Install site dependencies
+        run: npm ci
+        working-directory: site
+
+      - name: Build Astro site
+        run: npm run build
+        working-directory: site
+
+      - name: Verify dashboard + site output
         run: |
-          if [ ! -s docs/latest_interactive.html ]; then
-            echo "docs/latest_interactive.html missing or empty — refusing to push broken page"
+          if [ ! -s dataset/trends/latest_interactive.html ]; then
+            echo "dataset/trends/latest_interactive.html missing or empty — refusing to push"
+            exit 1
+          fi
+          if [ ! -s docs/index.html ]; then
+            echo "docs/index.html missing or empty — refusing to push broken site"
+            exit 1
+          fi
+          if [ ! -s docs/trending/index.html ]; then
+            echo "docs/trending/index.html missing or empty — refusing to push broken page"
             exit 1
           fi
 
@@ -56,13 +68,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/latest_light.png docs/latest_dark.png docs/latest_interactive.html docs/.nojekyll
-          git add "${{ steps.resolve.outputs.notebook }}"
-          git add dataset/trends/run_* 2>/dev/null || true
-          git add dataset/trends/combined/ 2>/dev/null || true
+          git add dataset/trends/trends24_id.csv dataset/trends/latest_interactive.html docs/
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "chore: refresh trend chart [skip ci]"
+            git commit -m "chore: refresh trending data + dashboard [skip ci]"
             git push
           fi
+      # Repo Settings -> Pages -> "Deploy from a branch": main / docs. This is the existing
+      # setup (unchanged by this workflow) — Astro's outDir is docs/ (site/astro.config.mjs),
+      # so this stays a plain static-file Pages deploy, no Actions-based Pages flow needed.
